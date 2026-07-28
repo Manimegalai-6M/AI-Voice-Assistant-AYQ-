@@ -304,6 +304,14 @@ if audio_value is not None:
 
     audio_bytes = audio_value.getvalue()
 
+    # ADD THIS CODE HERE
+    if audio_bytes == st.session_state.last_audio:
+        st.stop()
+
+    st.session_state.last_audio = audio_bytes
+    # END OF NEW CODE
+
+
     if len(audio_bytes) == 0:
 
         st.warning("No audio detected.")
