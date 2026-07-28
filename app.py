@@ -144,9 +144,9 @@ with st.sidebar:
     language=st.selectbox(
         "Voice Language",
         [
-            "en",
-            "ta",
-            "hi"
+            "English",
+            "Tamil",
+            "Hindi"
         ]
     )
 
