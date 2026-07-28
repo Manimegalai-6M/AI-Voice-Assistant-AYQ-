@@ -294,22 +294,32 @@ st.write(
     "Press the microphone below and record your question."
 )
 
-audio_value = st.audio_input("Record your question")
+audio_value = st.audio_input(
+    "🎤 Record your question"
+)
+
+ask_button = st.button("🚀 Ask AYQ")
 
 # ---------------------------------------------------
 # PROCESS AUDIO
 # ---------------------------------------------------
 
-if audio_value is not None:
+if audio_value is not None and ask_button:
 
     audio_bytes = audio_value.getvalue()
 
     # ADD THIS CODE HERE
-    if audio_bytes == st.session_state.last_audio:
+    if audio_value is not None:
+
+    audio_bytes = audio_value.getvalue()
+
+    if len(audio_bytes) == 0:
+
+        st.warning("No audio detected.")
+
         st.stop()
 
-    st.session_state.last_audio = audio_bytes
-    # END OF NEW CODE
+    st.audio(audio_value)
 
 
     if len(audio_bytes) == 0:
