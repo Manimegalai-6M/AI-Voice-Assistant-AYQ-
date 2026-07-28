@@ -118,13 +118,15 @@ if "history" not in st.session_state:
 if "questions" not in st.session_state:
     st.session_state.questions=0
 
+if "last_audio" not in st.session_state:
+    st.session_state.last_audio=None
 # ---------------------------------------------------
 # SIDEBAR
 # ---------------------------------------------------
 
 with st.sidebar:
 
-    st.title("🤖 AUQ")
+    st.title("🤖 AYQ")
 
     st.write("Your Personal AI Assistant")
 
