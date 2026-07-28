@@ -311,7 +311,7 @@ if audio_value is not None and ask_button:
     # ADD THIS CODE HERE
     if audio_value is not None:
 
-    audio_bytes = audio_value.getvalue()
+        audio_bytes = audio_value.getvalue()
 
     if len(audio_bytes) == 0:
 
