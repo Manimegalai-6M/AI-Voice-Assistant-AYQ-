@@ -1,4 +1,5 @@
 import os
+import json
 from io import BytesIO
 from datetime import datetime
 
@@ -17,7 +18,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
 # ---------------------------------------------------
 # CUSTOM CSS
 # ---------------------------------------------------
@@ -25,73 +25,168 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-html, body, [class*="css"]{
+html, body, [class*="css"] {
     background:#0F172A;
     color:white;
 }
 
-.main{
+
+/* Main background */
+
+.main {
     background:#0F172A;
 }
 
-section[data-testid="stSidebar"]{
+
+/* Sidebar */
+
+section[data-testid="stSidebar"] {
     background:#111827;
 }
 
-.hero{
-    background:linear-gradient(90deg,#2563EB,#7C3AED);
+
+/* Hero Section */
+
+.hero {
+
+    background:linear-gradient(
+        90deg,
+        #2563EB,
+        #7C3AED
+    );
+
     padding:35px;
+
     border-radius:20px;
+
     text-align:center;
+
     margin-bottom:20px;
-    box-shadow:0px 10px 30px rgba(0,0,0,.35);
+
+    box-shadow:
+    0px 10px 30px rgba(0,0,0,0.35);
+
 }
 
-.hero h1{
+
+.hero h1 {
+
     color:white;
+
     font-size:48px;
+
 }
 
-.hero p{
+
+.hero p {
+
     color:#E5E7EB;
+
     font-size:20px;
+
 }
 
-.user-card{
+
+/* User Message Card */
+
+.user-card {
+
     background:#1E293B;
+
     padding:18px;
+
     border-radius:15px;
+
     margin-top:15px;
-    border-left:6px solid #3B82F6;
+
+    border-left:
+    6px solid #3B82F6;
+
 }
 
-.ai-card{
+
+/* AI Response Card */
+
+.ai-card {
+
     background:#162033;
+
     padding:18px;
+
     border-radius:15px;
+
     margin-top:15px;
-    border-left:6px solid #8B5CF6;
+
+    border-left:
+    6px solid #8B5CF6;
+
 }
 
-.footer{
-    margin-top:50px;
-    text-align:center;
-    color:#94A3B8;
-    font-size:14px;
-}
 
-.stats{
+/* Statistics Cards */
+
+.stats {
+
     background:#111827;
+
     border-radius:15px;
+
     padding:18px;
+
     text-align:center;
+
 }
 
-hr{
-    border:1px solid #374151;
+
+/* Footer */
+
+.footer {
+
+    margin-top:50px;
+
+    text-align:center;
+
+    color:#94A3B8;
+
+    font-size:14px;
+
 }
+
+
+/* Divider */
+
+hr {
+
+    border:
+    1px solid #374151;
+
+}
+
+
+/* Buttons */
+
+.stButton button {
+
+    width:100%;
+
+    border-radius:10px;
+
+    font-size:18px;
+
+}
+
+
+/* Audio Player */
+
+audio {
+
+    width:100%;
+
+}
+
 
 </style>
+
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------
@@ -100,26 +195,59 @@ hr{
 
 load_dotenv()
 
-groq_api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+
+# Get Groq API Key
+# First check Streamlit Cloud secrets
+# Then check local .env file
+
+groq_api_key = (
+    st.secrets.get("GROQ_API_KEY")
+    if "GROQ_API_KEY" in st.secrets
+    else os.getenv("GROQ_API_KEY")
+)
+
+
+# Check API Key
 
 if not groq_api_key:
-    st.error("GROQ_API_KEY not found.")
+
+    st.error(
+        "❌ GROQ_API_KEY not found. "
+        "Please add it in Streamlit Secrets or .env file."
+    )
+
     st.stop()
 
-client = Groq(api_key=groq_api_key)
+
+# Initialize Groq Client
+
+client = Groq(
+    api_key=groq_api_key
+)
 
 # ---------------------------------------------------
 # SESSION STATE
 # ---------------------------------------------------
 
+# Store conversation history
+
 if "history" not in st.session_state:
-    st.session_state.history=[]
+
+    st.session_state.history = []
+
+
+# Count total questions
 
 if "questions" not in st.session_state:
-    st.session_state.questions=0
 
-if "last_audio" not in st.session_state:
-    st.session_state.last_audio=None
+    st.session_state.questions = 0
+
+
+# Store current audio processing status
+
+if "processing" not in st.session_state:
+
+    st.session_state.processing = False
 # ---------------------------------------------------
 # SIDEBAR
 # ---------------------------------------------------
@@ -128,12 +256,17 @@ with st.sidebar:
 
     st.title("🤖 AYQ")
 
-    st.write("Your Personal AI Assistant")
+    st.write(
+        "Your Personal AI Voice Assistant"
+    )
 
     st.divider()
 
-    personality=st.selectbox(
-        "AI Personality",
+
+    # AI Personality Selection
+
+    personality = st.selectbox(
+        "🎭 AI Personality",
         [
             "General Assistant",
             "Teacher",
@@ -143,120 +276,222 @@ with st.sidebar:
         ]
     )
 
-    language=st.selectbox(
-        "Voice Language",
-        [
-            "English",
-            "Tamil",
-            "Hindi"
-        ]
+
+    # Voice Language Selection
+
+    language = st.selectbox(
+        "🌍 Voice Language",
+        {
+            "English": "en",
+            "Tamil": "ta",
+            "Hindi": "hi"
+        }
     )
 
-    temperature=st.slider(
-        "Creativity",
-        0.0,
-        1.0,
-        0.3,
-        0.1
+
+    # Creativity Level
+
+    temperature = st.slider(
+        "🧠 Creativity",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.3,
+        step=0.1
     )
+
 
     st.divider()
 
-    st.subheader("Statistics")
+
+    # Statistics
+
+    st.subheader("📊 Statistics")
+
 
     st.metric(
         "Questions",
         st.session_state.questions
     )
 
+
     st.metric(
         "Conversation",
         len(st.session_state.history)
     )
 
+
     st.divider()
+
+
+    # Clear Chat Button
 
     if st.button("🗑 Clear Conversation"):
 
-        st.session_state.history=[]
 
-        st.session_state.questions=0
+        st.session_state.history = []
+
+
+        st.session_state.questions = 0
+
+
+        st.session_state.processing = False
+
+
+        st.success(
+            "Conversation cleared!"
+        )
+
 
         st.rerun()
-
 # ---------------------------------------------------
 # HERO
 # ---------------------------------------------------
 
-st.markdown("""
-<div class="hero">
+st.markdown(
+    """
+    <div class="hero">
 
-<h1>🎙️ AYQ</h1>
+        <h1>🎙️ AYQ</h1>
 
-<p>
-Your Personal AI Voice Assistant
-</p>
+        <p>
+            Your Personal AI Voice Assistant
+        </p>
 
-</div>
-""",unsafe_allow_html=True)
+        <p>
+            🎤 Speak • 🧠 Think • 🔊 Respond
+        </p>
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # ---------------------------------------------------
 # SYSTEM PROMPTS
 # ---------------------------------------------------
 
-SYSTEM_PROMPTS={
+SYSTEM_PROMPTS = {
 
-"General Assistant":
-"You are a friendly AI assistant.",
+    "General Assistant":
+    """
+    You are AYQ, a friendly AI voice assistant.
+    Answer clearly and helpfully.
+    Keep responses simple and easy to understand.
+    """,
 
-"Teacher":
-"Explain everything simply with examples.",
 
-"Programmer":
-"Answer like a senior software engineer. Include code whenever possible.",
+    "Teacher":
+    """
+    You are a patient teacher.
+    Explain concepts step-by-step with simple examples.
+    Help users learn easily.
+    """,
 
-"Motivator":
-"Be encouraging and positive.",
 
-"Interviewer":
-"Behave like an interviewer and ask follow-up questions."
+    "Programmer":
+    """
+    You are a senior software engineer.
+    Give accurate programming explanations.
+    Provide clean code examples when needed.
+    Explain errors and solutions clearly.
+    """,
+
+
+    "Motivator":
+    """
+    You are a positive motivational coach.
+    Encourage users and provide practical advice.
+    Keep your tone supportive.
+    """,
+
+
+    "Interviewer":
+    """
+    You are an AI interviewer.
+    Ask professional follow-up questions.
+    Evaluate answers and provide feedback.
+    Simulate a real interview experience.
+    """
 
 }
+# ---------------------------------------------------
+# PROCESS AUDIO
+# ---------------------------------------------------
 
 # ---------------------------------------------------
 # FUNCTIONS
 # ---------------------------------------------------
 
+
+# ---------------- AI CHAT FUNCTION ----------------
+
 def generate_ai(question):
 
-    response=client.chat.completions.create(
+    messages = [
+
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPTS[personality]
+        }
+
+    ]
+
+
+    # Add previous conversation memory
+
+    for chat in st.session_state.history:
+
+        messages.append(
+            {
+                "role": "user",
+                "content": chat["question"]
+            }
+        )
+
+
+        messages.append(
+            {
+                "role": "assistant",
+                "content": chat["answer"]
+            }
+        )
+
+
+    # Add current question
+
+    messages.append(
+        {
+            "role": "user",
+            "content": question
+        }
+    )
+
+
+    response = client.chat.completions.create(
 
         model="llama-3.3-70b-versatile",
 
-        messages=[
-            {
-                "role":"system",
-                "content":SYSTEM_PROMPTS[personality]
-            },
-            {
-                "role":"user",
-                "content":question
-            }
-        ],
+        messages=messages,
 
         temperature=temperature,
 
         max_tokens=400
+
     )
+
 
     return response.choices[0].message.content
 
 
+
+# ---------------- TEXT TO SPEECH FUNCTION ----------------
+
 def text_to_speech(text):
 
-    audio=BytesIO()
+    audio = BytesIO()
 
-    tts=gTTS(
+
+    tts = gTTS(
 
         text=text,
 
@@ -264,18 +499,27 @@ def text_to_speech(text):
 
     )
 
+
     tts.write_to_fp(audio)
 
+
     audio.seek(0)
+
 
     return audio
 
 
+
+# ---------------- SPEECH TO TEXT FUNCTION ----------------
+
 def speech_to_text(audio_bytes):
 
-    transcript=client.audio.transcriptions.create(
+    transcript = client.audio.transcriptions.create(
 
-        file=("audio.wav",audio_bytes),
+        file=(
+            "audio.wav",
+            audio_bytes
+        ),
 
         model="whisper-large-v3-turbo",
 
@@ -283,7 +527,32 @@ def speech_to_text(audio_bytes):
 
     )
 
+
     return transcript.text
+
+
+
+# ---------------- SAVE HISTORY FUNCTION ----------------
+
+def save_history():
+
+    with open(
+        "history.json",
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        json.dump(
+
+            st.session_state.history,
+
+            f,
+
+            indent=4,
+
+            ensure_ascii=False
+
+        )
 # ---------------------------------------------------
 # MAIN INTERFACE
 # ---------------------------------------------------
@@ -291,14 +560,24 @@ def speech_to_text(audio_bytes):
 st.subheader("🎤 Ask using your voice")
 
 st.write(
-    "Press the microphone below and record your question."
+    "Record your question and click Ask AYQ."
 )
+
+
+# Voice Recorder
 
 audio_value = st.audio_input(
-    "🎤 Record your question"
+    "🎙️ Record your question"
 )
 
-ask_button = st.button("🚀 Ask AYQ")
+
+# Ask Button
+
+ask_button = st.button(
+    "🚀 Ask AYQ"
+)
+
+
 
 # ---------------------------------------------------
 # PROCESS AUDIO
@@ -306,54 +585,71 @@ ask_button = st.button("🚀 Ask AYQ")
 
 if audio_value is not None and ask_button:
 
+
     audio_bytes = audio_value.getvalue()
 
-    # ADD THIS CODE HERE
-    if audio_value is not None:
 
-        audio_bytes = audio_value.getvalue()
+    # Check empty audio
 
     if len(audio_bytes) == 0:
 
-        st.warning("No audio detected.")
+        st.warning(
+            "No audio detected."
+        )
 
         st.stop()
 
-    st.audio(audio_value)
 
 
-    if len(audio_bytes) == 0:
+    # Show recorded audio
 
-        st.warning("No audio detected.")
+    st.audio(
+        audio_value
+    )
 
-        st.stop()
 
-    st.audio(audio_value)
 
-    # ---------------- Speech To Text ----------------
+    # ---------------- SPEECH TO TEXT ----------------
 
-    with st.spinner("🎧 Listening..."):
+
+    with st.spinner(
+        "🎧 Listening..."
+    ):
 
         try:
 
-            user_text = speech_to_text(audio_bytes)
+            user_text = speech_to_text(
+                audio_bytes
+            )
+
 
         except Exception as e:
 
-            st.error(f"Speech recognition failed.\n\n{e}")
+            st.error(
+                f"Speech recognition failed.\n\n{e}"
+            )
 
             st.stop()
 
+
+
     if not user_text.strip():
 
-        st.warning("No speech detected.")
+        st.warning(
+            "No speech detected."
+        )
 
         st.stop()
 
-    # ---------------- Show User ----------------
+
+
+    # ---------------- SHOW USER QUESTION ----------------
+
 
     st.markdown(
+
         f"""
+
         <div class="user-card">
 
         <h4>👤 You</h4>
@@ -361,24 +657,43 @@ if audio_value is not None and ask_button:
         <p>{user_text}</p>
 
         </div>
+
         """,
+
         unsafe_allow_html=True
+
     )
 
-    # Save question count
+
+
+    # Increase question count
 
     st.session_state.questions += 1
 
-    # ---------------- AI Response ----------------
 
-    with st.spinner("🧠 AUQ is thinking..."):
 
-        ai_text = generate_ai(user_text)
 
-    # ---------------- Show AI ----------------
+    # ---------------- AI RESPONSE ----------------
+
+
+    with st.spinner(
+        "🧠 AYQ is thinking..."
+    ):
+
+
+        ai_text = generate_ai(
+            user_text
+        )
+
+
+
+    # ---------------- SHOW AI ANSWER ----------------
+
 
     st.markdown(
+
         f"""
+
         <div class="ai-card">
 
         <h4>🤖 AYQ</h4>
@@ -386,98 +701,189 @@ if audio_value is not None and ask_button:
         <p>{ai_text}</p>
 
         </div>
+
         """,
+
         unsafe_allow_html=True
+
     )
 
-    # ---------------- Save Conversation ----------------
+
+
+    # ---------------- SAVE CONVERSATION ----------------
+
 
     st.session_state.history.append(
+
         {
-            "time": datetime.now().strftime("%I:%M %p"),
-            "question": user_text,
-            "answer": ai_text
+
+            "time":
+            datetime.now().strftime("%I:%M %p"),
+
+            "question":
+            user_text,
+
+            "answer":
+            ai_text
+
         }
+
     )
 
-    # ---------------- Text To Speech ----------------
 
-    with st.spinner("🔊 Generating Voice..."):
+    # Save JSON file
 
-        audio_response = text_to_speech(ai_text)
+    save_history()
+
+
+
+
+    # ---------------- TEXT TO SPEECH ----------------
+
+
+    with st.spinner(
+        "🔊 Generating Voice..."
+    ):
+
+
+        audio_response = text_to_speech(
+            ai_text
+        )
+
+
 
     st.audio(
+
         audio_response,
+
         format="audio/mp3"
+
     )
 
-    # ---------------- Download Answer ----------------
+
+
+    # ---------------- DOWNLOAD RESPONSE ----------------
+
 
     st.download_button(
+
         label="📄 Download Response",
+
         data=ai_text,
+
         file_name="AYQ_Response.txt",
+
         mime="text/plain"
+
     )
 
-    # ---------------- Download Voice ----------------
+
+
+    # ---------------- DOWNLOAD VOICE ----------------
+
 
     st.download_button(
-        label="🎵 Download Voice",
-        data=audio_response.getvalue(),
-        file_name="AYQ_Voice.mp3",
-        mime="audio/mp3"
-    )
 
+        label="🎵 Download Voice",
+
+        data=audio_response.getvalue(),
+
+        file_name="AYQ_Voice.mp3",
+
+        mime="audio/mp3"
+
+    )
 # ---------------------------------------------------
 # CONVERSATION HISTORY
 # ---------------------------------------------------
 
 st.divider()
 
-st.subheader("💬 Conversation History")
+
+st.subheader(
+    "💬 Conversation History"
+)
+
 
 if len(st.session_state.history) == 0:
 
-    st.info("No conversation yet.")
+
+    st.info(
+        "No conversation yet. Start asking AYQ!"
+    )
+
 
 else:
 
-    for chat in reversed(st.session_state.history):
+
+    for chat in reversed(
+        st.session_state.history
+    ):
+
+
+        # User message
 
         st.markdown(
+
             f"""
+
             <div class="user-card">
+
 
             <b>👤 You</b>
 
+
             <br><br>
+
 
             {chat["question"]}
 
+
             <br><br>
 
-            <small>{chat["time"]}</small>
+
+            <small>
+            🕒 {chat["time"]}
+            </small>
+
 
             </div>
+
             """,
+
             unsafe_allow_html=True
+
         )
 
+
+
+        # AI response
+
         st.markdown(
+
             f"""
+
             <div class="ai-card">
+
 
             <b>🤖 AYQ</b>
 
+
             <br><br>
+
 
             {chat["answer"]}
 
+
             </div>
+
+
             """,
+
             unsafe_allow_html=True
+
         )
+
 
         st.write("")
 # ---------------------------------------------------
@@ -486,86 +892,205 @@ else:
 
 st.divider()
 
+
+st.subheader(
+    "📊 AYQ Dashboard"
+)
+
+
 col1, col2, col3 = st.columns(3)
+
+
+
+# ---------------- Questions ----------------
 
 with col1:
 
+
     st.markdown(
+
         """
+
         <div class="stats">
 
         <h3>📊 Questions</h3>
 
         </div>
+
         """,
+
         unsafe_allow_html=True
+
     )
 
-    st.metric("", st.session_state.questions)
+
+    st.metric(
+
+        label="",
+
+        value=st.session_state.questions
+
+    )
+
+
+
+# ---------------- Language ----------------
 
 with col2:
 
+
     st.markdown(
+
         """
+
         <div class="stats">
 
         <h3>🌍 Language</h3>
 
         </div>
+
         """,
+
         unsafe_allow_html=True
+
     )
 
-    st.write(language.upper())
+
+    st.write(
+
+        language.upper()
+
+    )
+
+
+
+# ---------------- Personality ----------------
 
 with col3:
 
+
     st.markdown(
+
         """
+
         <div class="stats">
 
         <h3>🎭 Personality</h3>
 
         </div>
+
         """,
+
         unsafe_allow_html=True
+
     )
 
-    st.write(personality)
 
+    st.write(
+
+        personality
+
+    )
 # ---------------------------------------------------
-# ABOUT
+# ABOUT AYQ
 # ---------------------------------------------------
 
 st.divider()
 
-with st.expander("ℹ About AYQ"):
 
-    st.markdown("""
-### 🤖 AYQ
+with st.expander(
+    "ℹ️ About AYQ"
+):
 
-AYQ is an AI-powered Voice Assistant built using:
 
-- 🎙 Streamlit
-- 🧠 Groq API
-- 🗣 Whisper Large V3 Turbo
-- 🤖 Llama 3.3 70B Versatile
-- 🔊 Google Text-to-Speech
+    st.markdown(
+        """
 
-Features
+## 🤖 AYQ - AI Voice Assistant
 
-- ✅ Voice Recording
-- ✅ Speech to Text
-- ✅ AI Chat
-- ✅ AI Voice Reply
-- ✅ Conversation History
-- ✅ Download Response
-- ✅ Download Voice
-- ✅ Multiple Personalities
-- ✅ Multiple Languages
 
-Developed for learning AI application development using Python and Streamlit.
-""")
+AYQ is an AI-powered voice assistant application built using
+modern Generative AI technologies.
+
+
+### 🚀 Technologies Used
+
+
+- 🎙️ **Streamlit**  
+  User interface and web application framework
+
+
+- 🧠 **Groq API**  
+  Fast AI inference engine
+
+
+- 🤖 **Llama 3.3 70B Versatile**  
+  Large Language Model for intelligent conversations
+
+
+- 🗣️ **Whisper Large V3 Turbo**  
+  Speech-to-Text voice recognition
+
+
+- 🔊 **Google Text-to-Speech (gTTS)**  
+  AI voice response generation
+
+
+
+### ✨ Features
+
+
+✅ Voice Recording
+
+✅ Speech to Text Conversion
+
+✅ AI Chat Assistant
+
+✅ AI Voice Reply
+
+✅ Conversation Memory
+
+✅ Conversation History
+
+✅ Download Text Response
+
+✅ Download Voice Response
+
+✅ Multiple AI Personalities
+
+✅ Multiple Languages
+
+✅ AI Chat Memory
+
+
+
+### 🎯 Project Goal
+
+
+AYQ was developed to learn and demonstrate
+AI application development using Python,
+Streamlit, Speech AI, and Large Language Models.
+
+
+### 🔮 Future Improvements
+
+
+- 🎨 AI Avatar
+
+- 🌊 Animated Voice Waveform
+
+- 😊 AI Emotion Detection
+
+- 🌐 Real-time Translation
+
+- 🖼️ AI Image Generation
+
+- 📱 Mobile Application
+
+
+"""
+
+    )
 
 # ---------------------------------------------------
 # QUICK TIPS
@@ -573,14 +1098,64 @@ Developed for learning AI application development using Python and Streamlit.
 
 st.divider()
 
-with st.expander("💡 Tips"):
 
-    st.markdown("""
-- Speak clearly.
-- Keep your microphone close.
-- Allow microphone permission in your browser.
-- Use English for the best Whisper transcription accuracy.
-""")
+with st.expander(
+    "💡 Quick Tips"
+):
+
+    st.markdown(
+        """
+
+### 🎤 Voice Recording Tips
+
+
+✅ Speak clearly and slowly.
+
+✅ Keep your microphone close.
+
+✅ Avoid background noise.
+
+✅ Give complete questions for better answers.
+
+✅ Allow microphone permission in your browser.
+
+
+
+### 🌍 Language Tips
+
+
+✅ English gives the best Whisper accuracy.
+
+✅ Tamil and Hindi voice responses are supported.
+
+✅ Select the correct voice language before asking.
+
+
+
+### 🤖 AI Response Tips
+
+
+✅ Choose the right AI personality.
+
+✅ Programmer mode is useful for coding questions.
+
+✅ Teacher mode is useful for learning concepts.
+
+✅ Interviewer mode helps practice interviews.
+
+
+
+### ⚡ Performance Tips
+
+
+✅ Use a stable internet connection.
+
+✅ Wait until AYQ finishes responding before asking another question.
+
+✅ Clear conversation when starting a new topic.
+
+"""
+    )
 
 # ---------------------------------------------------
 # FOOTER
@@ -588,21 +1163,34 @@ with st.expander("💡 Tips"):
 
 st.markdown(
     """
+
     <div class="footer">
 
-    <hr>
+        <hr>
 
-    <h4>🎙️ AYQ - AI Voice Assistant</h4>
+        <h4>
+        🎙️ AYQ - AI Voice Assistant
+        </h4>
 
-    <p>
-    Powered by Streamlit • Groq • Whisper • Llama • gTTS
-    </p>
 
-    <p>
-    Version 2.0
-    </p>
+        <p>
+        Powered by Streamlit • Groq • Whisper • Llama • gTTS
+        </p>
+
+
+        <p>
+        🚀 Version 2.0 | Built with Python & Generative AI
+        </p>
+
+
+        <p>
+        © 2026 AYQ. All rights reserved.
+        </p>
+
 
     </div>
+
     """,
+
     unsafe_allow_html=True
 )
