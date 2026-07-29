@@ -1,7 +1,6 @@
 import os
 from io import BytesIO
 from datetime import datetime
-
 import streamlit as st
 from dotenv import load_dotenv
 from groq import Groq
@@ -113,11 +112,41 @@ client = Groq(api_key=groq_api_key)
 # ---------------------------------------------------
 
 if "history" not in st.session_state:
-    st.session_state.history=[]
+    st.session_state.history = []
 
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {
+            "role": "system",
+            "content": "You are a friendly AI assistant."
+        }
+    ]
 if "questions" not in st.session_state:
-    st.session_state.questions=0
+    st.session_state.questions = 0
+if "last_audio_id" not in st.session_state:
+    st.session_state.last_audio_id = None
+# ---------------------------------------------------
+# SYSTEM PROMPTS
+# ---------------------------------------------------
 
+SYSTEM_PROMPTS={
+
+"General Assistant":
+"You are a friendly AI assistant.",
+
+"Teacher":
+"Explain everything simply with examples.",
+
+"Programmer":
+"Answer like a senior software engineer. Include code whenever possible.",
+
+"Motivator":
+"Be encouraging and positive.",
+
+"Interviewer":
+"Behave like an interviewer and ask follow-up questions."
+
+}
 # ---------------------------------------------------
 # SIDEBAR
 # ---------------------------------------------------
@@ -141,14 +170,22 @@ with st.sidebar:
         ]
     )
 
-    language=st.selectbox(
+    language_name = st.selectbox(
         "Voice Language",
         [
-            "en",
-            "ta",
-            "hi"
+            "English",
+            "Tamil",
+            "Hindi"
         ]
     )
+
+    language_map = {
+        "English": "en",
+        "Tamil": "ta",
+        "Hindi": "hi"
+    }
+
+    language = language_map[language_name]
 
     temperature=st.slider(
         "Creativity",
@@ -168,20 +205,26 @@ with st.sidebar:
     )
 
     st.metric(
-        "Conversation",
+        "Messages",
         len(st.session_state.history)
     )
 
     st.divider()
 
     if st.button("🗑 Clear Conversation"):
+        st.session_state.messages = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPTS[personality]
+            }
+        ]
 
-        st.session_state.history=[]
+        st.session_state.history = []
 
-        st.session_state.questions=0
+        st.session_state.questions = 0
 
+        st.session_state.last_audio_id = None
         st.rerun()
-
 # ---------------------------------------------------
 # HERO
 # ---------------------------------------------------
@@ -199,57 +242,51 @@ Your Personal AI Voice Assistant
 """,unsafe_allow_html=True)
 
 # ---------------------------------------------------
-# SYSTEM PROMPTS
-# ---------------------------------------------------
-
-SYSTEM_PROMPTS={
-
-"General Assistant":
-"You are a friendly AI assistant.",
-
-"Teacher":
-"Explain everything simply with examples.",
-
-"Programmer":
-"Answer like a senior software engineer. Include code whenever possible.",
-
-"Motivator":
-"Be encouraging and positive.",
-
-"Interviewer":
-"Behave like an interviewer and ask follow-up questions."
-
-}
-
-# ---------------------------------------------------
 # FUNCTIONS
 # ---------------------------------------------------
 
-def generate_ai(question):
+def generate_ai(user_text):
 
-    response=client.chat.completions.create(
+    # Update system prompt
+    st.session_state.messages[0] = {
+        "role": "system",
+        "content": SYSTEM_PROMPTS[personality]
+    }
 
-        model="llama-3.3-70b-versatile",
-
-        messages=[
-            {
-                "role":"system",
-                "content":SYSTEM_PROMPTS[personality]
-            },
-            {
-                "role":"user",
-                "content":question
-            }
-        ],
-
-        temperature=temperature,
-
-        max_tokens=400
+    # Add user message
+    st.session_state.messages.append(
+        {
+            "role": "user",
+            "content": user_text
+        }
     )
 
-    return response.choices[0].message.content
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=st.session_state.messages,
+        temperature=temperature,
+        max_tokens=1000
+    )
 
+    ai_text = response.choices[0].message.content
 
+    # Save AI reply
+    st.session_state.messages.append(
+        {
+            "role": "assistant",
+            "content": ai_text
+        }
+    )
+
+    MAX_HISTORY = 20
+
+    if len(st.session_state.messages) > MAX_HISTORY + 1:
+        st.session_state.messages = (
+            [st.session_state.messages[0]]
+            + st.session_state.messages[-MAX_HISTORY:]
+        )
+
+    return ai_text
 def text_to_speech(text):
 
     audio=BytesIO()
@@ -300,16 +337,20 @@ audio_value = st.audio_input("Record your question")
 
 if audio_value is not None:
 
+    current_audio_id = hash(audio_value.getvalue())
+
+    if st.session_state.last_audio_id == current_audio_id:
+        st.stop()
+
+    st.session_state.last_audio_id = current_audio_id
+
     audio_bytes = audio_value.getvalue()
 
     if len(audio_bytes) == 0:
-
         st.warning("No audio detected.")
-
         st.stop()
 
     st.audio(audio_value)
-
     # ---------------- Speech To Text ----------------
 
     with st.spinner("🎧 Listening..."):
@@ -351,7 +392,7 @@ if audio_value is not None:
 
     # ---------------- AI Response ----------------
 
-    with st.spinner("🧠 AUQ is thinking..."):
+    with st.spinner("🧠 AYQ is thinking..."):
 
         ai_text = generate_ai(user_text)
 
@@ -379,7 +420,7 @@ if audio_value is not None:
             "answer": ai_text
         }
     )
-
+    
     # ---------------- Text To Speech ----------------
 
     with st.spinner("🔊 Generating Voice..."):
@@ -496,7 +537,7 @@ with col2:
         unsafe_allow_html=True
     )
 
-    st.write(language.upper())
+    st.write(language_name)
 
 with col3:
 
