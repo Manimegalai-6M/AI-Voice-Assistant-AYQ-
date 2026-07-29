@@ -5,7 +5,7 @@ import streamlit as st
 from dotenv import load_dotenv
 from groq import Groq
 from gtts import gTTS
-
+import hashlib
 # ---------------------------------------------------
 # PAGE CONFIG
 # ---------------------------------------------------
@@ -21,78 +21,380 @@ st.set_page_config(
 # CUSTOM CSS
 # ---------------------------------------------------
 
-st.markdown("""
 <style>
 
-html, body, [class*="css"]{
-    background:#0F172A;
+/* ==========================
+   GOOGLE FONT
+========================== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+html,
+body,
+.stApp{
+    font-family:'Poppins',sans-serif;
     color:white;
+    overflow-x:hidden;
+
+    background:linear-gradient(
+    -45deg,
+    #0F172A,
+    #1E293B,
+    #312E81,
+    #0F766E,
+    #7C3AED
+    );
+
+    background-size:500% 500%;
+    animation:gradientBG 18s ease infinite;
 }
 
-.main{
-    background:#0F172A;
+/* Animated Background */
+
+@keyframes gradientBG{
+
+0%{
+background-position:0% 50%;
 }
+
+50%{
+background-position:100% 50%;
+}
+
+100%{
+background-position:0% 50%;
+}
+
+}
+
+
+/* ==========================
+SIDEBAR
+========================== */
 
 section[data-testid="stSidebar"]{
-    background:#111827;
+
+background:rgba(17,24,39,.85);
+
+backdrop-filter:blur(20px);
+
+border-right:1px solid rgba(255,255,255,.08);
+
 }
 
+
+/* ==========================
+HERO
+========================== */
+
 .hero{
-    background:linear-gradient(90deg,#2563EB,#7C3AED);
-    padding:35px;
-    border-radius:20px;
-    text-align:center;
-    margin-bottom:20px;
-    box-shadow:0px 10px 30px rgba(0,0,0,.35);
+
+background:rgba(255,255,255,.08);
+
+backdrop-filter:blur(20px);
+
+padding:45px;
+
+border-radius:25px;
+
+border:1px solid rgba(255,255,255,.15);
+
+box-shadow:
+
+0 10px 40px rgba(0,0,0,.45),
+
+0 0 30px rgba(124,58,237,.35);
+
+animation:floatHero 4s ease-in-out infinite;
+
+margin-bottom:30px;
+
 }
 
 .hero h1{
-    color:white;
-    font-size:48px;
+
+font-size:56px;
+
+font-weight:700;
+
+background:linear-gradient(
+90deg,
+#60A5FA,
+#A855F7,
+#22D3EE,
+#F472B6
+);
+
+-webkit-background-clip:text;
+
+-webkit-text-fill-color:transparent;
+
 }
 
 .hero p{
-    color:#E5E7EB;
-    font-size:20px;
+
+font-size:22px;
+
+color:#E2E8F0;
+
 }
+
+@keyframes floatHero{
+
+0%{transform:translateY(0px);}
+
+50%{transform:translateY(-8px);}
+
+100%{transform:translateY(0px);}
+
+}
+
+
+/* ==========================
+USER CARD
+========================== */
 
 .user-card{
-    background:#1E293B;
-    padding:18px;
-    border-radius:15px;
-    margin-top:15px;
-    border-left:6px solid #3B82F6;
+
+background:rgba(59,130,246,.12);
+
+border:1px solid rgba(96,165,250,.35);
+
+border-left:6px solid #3B82F6;
+
+backdrop-filter:blur(20px);
+
+padding:22px;
+
+border-radius:20px;
+
+margin-top:18px;
+
+transition:.35s;
+
+box-shadow:0 8px 20px rgba(0,0,0,.25);
+
 }
+
+.user-card:hover{
+
+transform:translateY(-6px) scale(1.02);
+
+box-shadow:0 0 35px rgba(59,130,246,.45);
+
+}
+
+
+/* ==========================
+AI CARD
+========================== */
 
 .ai-card{
-    background:#162033;
-    padding:18px;
-    border-radius:15px;
-    margin-top:15px;
-    border-left:6px solid #8B5CF6;
+
+background:rgba(168,85,247,.10);
+
+border:1px solid rgba(168,85,247,.30);
+
+border-left:6px solid #A855F7;
+
+backdrop-filter:blur(20px);
+
+padding:22px;
+
+border-radius:20px;
+
+margin-top:18px;
+
+transition:.35s;
+
+box-shadow:0 8px 20px rgba(0,0,0,.25);
+
 }
 
-.footer{
-    margin-top:50px;
-    text-align:center;
-    color:#94A3B8;
-    font-size:14px;
+.ai-card:hover{
+
+transform:translateY(-6px) scale(1.02);
+
+box-shadow:0 0 35px rgba(168,85,247,.45);
+
 }
+
+
+/* ==========================
+BUTTONS
+========================== */
+
+.stButton>button{
+
+width:100%;
+
+border-radius:14px;
+
+border:none;
+
+font-weight:600;
+
+padding:12px;
+
+background:linear-gradient(
+90deg,
+#3B82F6,
+#8B5CF6
+);
+
+color:white;
+
+transition:.35s;
+
+}
+
+.stButton>button:hover{
+
+transform:scale(1.04);
+
+box-shadow:
+
+0 0 25px rgba(139,92,246,.55);
+
+}
+
+
+/* ==========================
+DOWNLOAD BUTTON
+========================== */
+
+.stDownloadButton>button{
+
+width:100%;
+
+border-radius:14px;
+
+background:linear-gradient(
+90deg,
+#06B6D4,
+#3B82F6
+);
+
+color:white;
+
+border:none;
+
+font-weight:600;
+
+}
+
+
+/* ==========================
+METRICS
+========================== */
 
 .stats{
-    background:#111827;
-    border-radius:15px;
-    padding:18px;
-    text-align:center;
+
+background:rgba(255,255,255,.08);
+
+backdrop-filter:blur(20px);
+
+padding:25px;
+
+border-radius:20px;
+
+text-align:center;
+
+border:1px solid rgba(255,255,255,.12);
+
+transition:.3s;
+
 }
 
-hr{
-    border:1px solid #374151;
+.stats:hover{
+
+transform:translateY(-6px);
+
+box-shadow:0 0 25px rgba(34,211,238,.35);
+
+}
+
+
+/* ==========================
+SCROLLBAR
+========================== */
+
+::-webkit-scrollbar{
+
+width:10px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+background:linear-gradient(
+#3B82F6,
+#A855F7
+);
+
+border-radius:50px;
+
+}
+
+::-webkit-scrollbar-track{
+
+background:#111827;
+
+}
+
+
+/* ==========================
+FOOTER
+========================== */
+
+.footer{
+
+margin-top:60px;
+
+padding:25px;
+
+text-align:center;
+
+color:#CBD5E1;
+
+border-top:1px solid rgba(255,255,255,.08);
+
+}
+
+
+/* ==========================
+FADE ANIMATION
+========================== */
+
+@keyframes fade{
+
+from{
+
+opacity:0;
+
+transform:translateY(15px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+.hero,
+.user-card,
+.ai-card,
+.stats{
+
+animation:fade .8s ease;
+
 }
 
 </style>
-""", unsafe_allow_html=True)
-
 # ---------------------------------------------------
 # LOAD ENV
 # ---------------------------------------------------
@@ -129,7 +431,7 @@ if "last_audio_id" not in st.session_state:
 # SYSTEM PROMPTS
 # ---------------------------------------------------
 
-SYSTEM_PROMPTS={
+SYSTEM_PROMPTS = {
 
 "General Assistant":
 "You are a friendly AI assistant.",
@@ -153,13 +455,13 @@ SYSTEM_PROMPTS={
 
 with st.sidebar:
 
-    st.title("🤖 AUQ")
+    st.title("🤖 AYQ")
 
     st.write("Your Personal AI Assistant")
 
     st.divider()
 
-    personality=st.selectbox(
+    personality = st.selectbox(
         "AI Personality",
         [
             "General Assistant",
@@ -187,7 +489,7 @@ with st.sidebar:
 
     language = language_map[language_name]
 
-    temperature=st.slider(
+    temperature = st.slider(
         "Creativity",
         0.0,
         1.0,
@@ -205,7 +507,7 @@ with st.sidebar:
     )
 
     st.metric(
-        "Messages",
+        "Conversations Count",
         len(st.session_state.history)
     )
 
@@ -264,11 +566,11 @@ def generate_ai(user_text):
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=st.session_state.messages,
-        temperature=temperature,
-        max_tokens=1000
+        temperature=float(temperature),
+        max_tokens=700
     )
 
-    ai_text = response.choices[0].message.content
+    ai_text = (response.choices[0].message.content or"Sorry, I couldn't generate a response.").strip()
 
     # Save AI reply
     st.session_state.messages.append(
@@ -278,47 +580,47 @@ def generate_ai(user_text):
         }
     )
 
-    MAX_HISTORY = 20
+    MAX_HISTORY = 50
 
-    if len(st.session_state.messages) > MAX_HISTORY + 1:
+    if len(st.session_state.messages) > MAX_HISTORY:
         st.session_state.messages = (
             [st.session_state.messages[0]]
-            + st.session_state.messages[-MAX_HISTORY:]
+            + st.session_state.messages[-(MAX_HISTORY - 1):]
+        )
+    return ai_text
+
+
+def text_to_speech(text):
+    try:
+        audio = BytesIO()
+
+        tts = gTTS(
+            text=text[:3000],
+            lang=language
         )
 
-    return ai_text
-def text_to_speech(text):
+        tts.write_to_fp(audio)
 
-    audio=BytesIO()
+        audio.seek(0)
 
-    tts=gTTS(
+        return audio
 
-        text=text,
-
-        lang=language
-
-    )
-
-    tts.write_to_fp(audio)
-
-    audio.seek(0)
-
-    return audio
-
+    except Exception:
+        st.error("Unable to generate voice. Please try again.")
+        return None
 
 def speech_to_text(audio_bytes):
-
-    transcript=client.audio.transcriptions.create(
-
-        file=("audio.wav",audio_bytes),
-
-        model="whisper-large-v3-turbo",
-
-        response_format="json"
-
-    )
-
-    return transcript.text
+    try:
+        transcript = client.audio.transcriptions.create(
+            file=("audio.wav", audio_bytes),
+            model="whisper-large-v3-turbo",
+            response_format="json"
+        )
+        return transcript.text
+    except Exception:
+        st.error("Unable to recognize your voice. Please try again.")
+        return ""
+        
 # ---------------------------------------------------
 # MAIN INTERFACE
 # ---------------------------------------------------
@@ -337,7 +639,7 @@ audio_value = st.audio_input("Record your question")
 
 if audio_value is not None:
 
-    current_audio_id = hash(audio_value.getvalue())
+    current_audio_id = hashlib.md5(audio_value.getvalue()).hexdigest()
 
     if st.session_state.last_audio_id == current_audio_id:
         st.stop()
@@ -383,7 +685,7 @@ if audio_value is not None:
 
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html = True
     )
 
     # Save question count
@@ -391,11 +693,13 @@ if audio_value is not None:
     st.session_state.questions += 1
 
     # ---------------- AI Response ----------------
-
     with st.spinner("🧠 AYQ is thinking..."):
-
-        ai_text = generate_ai(user_text)
-
+        try:
+            ai_text = generate_ai(user_text)
+        except Exception as e:
+            st.error(f"AI Error: {e}")
+            st.stop()
+            
     # ---------------- Show AI ----------------
 
     st.markdown(
@@ -420,18 +724,20 @@ if audio_value is not None:
             "answer": ai_text
         }
     )
-    
+
+    # Keep only the latest 100 conversations
+    st.session_state.history = st.session_state.history[-100:]
     # ---------------- Text To Speech ----------------
-
+    audio_response = None
     with st.spinner("🔊 Generating Voice..."):
+        try:
+            audio_response = text_to_speech(ai_text)
 
-        audio_response = text_to_speech(ai_text)
+            if audio_response:
+                st.audio(audio_response, format="audio/mp3")
 
-    st.audio(
-        audio_response,
-        format="audio/mp3"
-    )
-
+        except Exception:
+            st.error("Voice generation failed.")
     # ---------------- Download Answer ----------------
 
     st.download_button(
@@ -441,15 +747,13 @@ if audio_value is not None:
         mime="text/plain"
     )
 
-    # ---------------- Download Voice ----------------
-
-    st.download_button(
-        label="🎵 Download Voice",
-        data=audio_response.getvalue(),
-        file_name="AYQ_Voice.mp3",
-        mime="audio/mp3"
-    )
-
+    if audio_response is not None:
+        st.download_button(
+            label="🎵 Download Voice",
+            data=audio_response.getvalue(),
+            file_name="AYQ_Voice.mp3",
+            mime="audio/mp3"
+        )
 # ---------------------------------------------------
 # CONVERSATION HISTORY
 # ---------------------------------------------------
@@ -613,7 +917,7 @@ st.markdown(
 
     <hr>
 
-    <h4>🎙️ AYQ - AI Voice Assistant</h4>
+    <h4>🎙️ AYQ - Ask Your Questions </h4>
 
     <p>
     Powered by Streamlit • Groq • Whisper • Llama • gTTS
