@@ -21,78 +21,76 @@ st.set_page_config(
 # CUSTOM CSS
 # ---------------------------------------------------
 
+st.markdown("""
 <style>
 
-/* ==========================
-   GOOGLE FONT
-========================== */
+/* Google Font */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
+/* ===========================
+BACKGROUND
+=========================== */
+
 html,
-body,
-.stApp{
+body{
     font-family:'Poppins',sans-serif;
     color:white;
     overflow-x:hidden;
+}
 
-    background:linear-gradient(
+.stApp{
+
+    background:
+    linear-gradient(
     -45deg,
+    #050816,
     #0F172A,
-    #1E293B,
-    #312E81,
+    #1E1B4B,
     #0F766E,
-    #7C3AED
-    );
+    #4C1D95,
+    #0EA5E9);
 
-    background-size:500% 500%;
-    animation:gradientBG 18s ease infinite;
+    background-size:600% 600%;
+    animation:bgMove 18s ease infinite;
+
 }
 
 /* Animated Background */
 
-@keyframes gradientBG{
+@keyframes bgMove{
 
-0%{
-background-position:0% 50%;
-}
-
-50%{
-background-position:100% 50%;
-}
-
-100%{
-background-position:0% 50%;
-}
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
 
 }
 
 
-/* ==========================
+/* ===========================
 SIDEBAR
-========================== */
+=========================== */
 
 section[data-testid="stSidebar"]{
 
-background:rgba(17,24,39,.85);
-
-backdrop-filter:blur(20px);
-
+background:rgba(10,15,35,.75);
+backdrop-filter:blur(25px);
 border-right:1px solid rgba(255,255,255,.08);
 
 }
 
 
-/* ==========================
+/* ===========================
 HERO
-========================== */
+=========================== */
 
 .hero{
 
+padding:45px;
+text-align:center;
+
 background:rgba(255,255,255,.08);
 
-backdrop-filter:blur(20px);
-
-padding:45px;
+backdrop-filter:blur(25px);
 
 border-radius:25px;
 
@@ -100,223 +98,254 @@ border:1px solid rgba(255,255,255,.15);
 
 box-shadow:
 
-0 10px 40px rgba(0,0,0,.45),
-
-0 0 30px rgba(124,58,237,.35);
-
-animation:floatHero 4s ease-in-out infinite;
+0 0 25px rgba(59,130,246,.4),
+0 0 60px rgba(168,85,247,.3);
 
 margin-bottom:30px;
+
+animation:
+heroFloat 4s ease-in-out infinite,
+fadeUp .8s ease;
 
 }
 
 .hero h1{
 
-font-size:56px;
+font-size:60px;
 
 font-weight:700;
 
-background:linear-gradient(
+background:
+linear-gradient(
 90deg,
-#60A5FA,
+#38BDF8,
 #A855F7,
-#22D3EE,
-#F472B6
-);
+#F472B6,
+#34D399);
+
+background-size:300%;
 
 -webkit-background-clip:text;
 
 -webkit-text-fill-color:transparent;
+
+animation:textGlow 6s linear infinite;
 
 }
 
 .hero p{
 
 font-size:22px;
-
 color:#E2E8F0;
 
 }
 
-@keyframes floatHero{
+@keyframes heroFloat{
 
-0%{transform:translateY(0px);}
-
+0%{transform:translateY(0);}
 50%{transform:translateY(-8px);}
+100%{transform:translateY(0);}
 
-100%{transform:translateY(0px);}
+}
+
+@keyframes textGlow{
+
+0%{background-position:0%;}
+100%{background-position:300%;}
 
 }
 
 
-/* ==========================
+/* ===========================
 USER CARD
-========================== */
+=========================== */
 
 .user-card{
 
 background:rgba(59,130,246,.12);
 
-border:1px solid rgba(96,165,250,.35);
+border-left:6px solid #38BDF8;
 
-border-left:6px solid #3B82F6;
-
-backdrop-filter:blur(20px);
+border-radius:18px;
 
 padding:22px;
 
-border-radius:20px;
-
 margin-top:18px;
+
+backdrop-filter:blur(20px);
 
 transition:.35s;
 
-box-shadow:0 8px 20px rgba(0,0,0,.25);
+box-shadow:0 10px 20px rgba(0,0,0,.25);
 
 }
 
 .user-card:hover{
 
-transform:translateY(-6px) scale(1.02);
+transform:translateY(-6px);
 
-box-shadow:0 0 35px rgba(59,130,246,.45);
+box-shadow:
+
+0 0 35px rgba(56,189,248,.45);
 
 }
 
 
-/* ==========================
+/* ===========================
 AI CARD
-========================== */
+=========================== */
 
 .ai-card{
 
-background:rgba(168,85,247,.10);
-
-border:1px solid rgba(168,85,247,.30);
+background:rgba(168,85,247,.12);
 
 border-left:6px solid #A855F7;
 
-backdrop-filter:blur(20px);
+border-radius:18px;
 
 padding:22px;
 
-border-radius:20px;
-
 margin-top:18px;
+
+backdrop-filter:blur(20px);
 
 transition:.35s;
 
-box-shadow:0 8px 20px rgba(0,0,0,.25);
+box-shadow:0 10px 20px rgba(0,0,0,.25);
 
 }
 
 .ai-card:hover{
 
-transform:translateY(-6px) scale(1.02);
+transform:translateY(-6px);
 
-box-shadow:0 0 35px rgba(168,85,247,.45);
+box-shadow:
+
+0 0 35px rgba(168,85,247,.45);
 
 }
 
 
-/* ==========================
+/* ===========================
 BUTTONS
-========================== */
+=========================== */
 
 .stButton>button{
 
 width:100%;
 
-border-radius:14px;
-
 border:none;
-
-font-weight:600;
 
 padding:12px;
 
-background:linear-gradient(
+border-radius:14px;
+
+font-weight:600;
+
+background:
+linear-gradient(
 90deg,
 #3B82F6,
-#8B5CF6
-);
+#8B5CF6,
+#EC4899);
+
+background-size:250%;
 
 color:white;
 
-transition:.35s;
+transition:.4s;
 
 }
 
 .stButton>button:hover{
 
+background-position:right;
+
 transform:scale(1.04);
 
 box-shadow:
 
-0 0 25px rgba(139,92,246,.55);
+0 0 25px rgba(168,85,247,.55);
 
 }
 
 
-/* ==========================
-DOWNLOAD BUTTON
-========================== */
+/* Download Button */
 
 .stDownloadButton>button{
 
 width:100%;
 
+padding:12px;
+
 border-radius:14px;
 
-background:linear-gradient(
+border:none;
+
+background:
+linear-gradient(
 90deg,
 #06B6D4,
-#3B82F6
-);
+#2563EB);
 
 color:white;
-
-border:none;
 
 font-weight:600;
 
 }
 
 
-/* ==========================
+/* ===========================
 METRICS
-========================== */
+=========================== */
 
 .stats{
 
 background:rgba(255,255,255,.08);
 
-backdrop-filter:blur(20px);
-
-padding:25px;
+padding:22px;
 
 border-radius:20px;
 
-text-align:center;
+backdrop-filter:blur(20px);
 
-border:1px solid rgba(255,255,255,.12);
+border:1px solid rgba(255,255,255,.10);
 
-transition:.3s;
+transition:.35s;
 
 }
 
 .stats:hover{
 
-transform:translateY(-6px);
+transform:translateY(-8px);
 
-box-shadow:0 0 25px rgba(34,211,238,.35);
+box-shadow:
+
+0 0 30px rgba(14,165,233,.45);
 
 }
 
 
-/* ==========================
+/* ===========================
+TEXT
+=========================== */
+
+h1,h2,h3,h4{
+
+color:white;
+
+}
+
+p{
+
+color:#E5E7EB;
+
+}
+
+
+/* ===========================
 SCROLLBAR
-========================== */
+=========================== */
 
 ::-webkit-scrollbar{
 
@@ -326,12 +355,12 @@ width:10px;
 
 ::-webkit-scrollbar-thumb{
 
-background:linear-gradient(
+background:
+linear-gradient(
 #3B82F6,
-#A855F7
-);
+#A855F7);
 
-border-radius:50px;
+border-radius:20px;
 
 }
 
@@ -342,35 +371,34 @@ background:#111827;
 }
 
 
-/* ==========================
+/* ===========================
 FOOTER
-========================== */
+=========================== */
 
 .footer{
 
-margin-top:60px;
+text-align:center;
 
 padding:25px;
 
-text-align:center;
-
-color:#CBD5E1;
+margin-top:60px;
 
 border-top:1px solid rgba(255,255,255,.08);
+
+color:#CBD5E1;
 
 }
 
 
-/* ==========================
-FADE ANIMATION
-========================== */
+/* ===========================
+ANIMATION
+=========================== */
 
-@keyframes fade{
+@keyframes fadeUp{
 
 from{
 
 opacity:0;
-
 transform:translateY(15px);
 
 }
@@ -378,23 +406,48 @@ transform:translateY(15px);
 to{
 
 opacity:1;
-
 transform:translateY(0);
 
 }
 
 }
 
-.hero,
 .user-card,
 .ai-card,
 .stats{
 
-animation:fade .8s ease;
+animation:fadeUp .8s ease;
+
+}
+
+
+/* ===========================
+INPUTS
+=========================== */
+
+.stSelectbox,
+.stSlider{
+
+background:transparent;
+
+}
+
+/* Remove Streamlit Header */
+
+header{
+
+visibility:hidden;
+
+}
+
+footer{
+
+visibility:hidden;
 
 }
 
 </style>
+""", unsafe_allow_html=True)
 # ---------------------------------------------------
 # LOAD ENV
 # ---------------------------------------------------
