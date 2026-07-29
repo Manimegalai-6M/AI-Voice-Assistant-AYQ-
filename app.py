@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from groq import Groq
 from gtts import gTTS
 import hashlib
+import html
 # ---------------------------------------------------
 # PAGE CONFIG
 # ---------------------------------------------------
@@ -620,7 +621,7 @@ def generate_ai(user_text):
         model="llama-3.3-70b-versatile",
         messages=st.session_state.messages,
         temperature=float(temperature),
-        max_tokens=700
+        max_tokens=600
     )
 
     ai_text = (response.choices[0].message.content or"Sorry, I couldn't generate a response.").strip()
@@ -649,7 +650,8 @@ def text_to_speech(text):
 
         tts = gTTS(
             text=text[:3000],
-            lang=language
+            lang=language,
+            slow=False
         )
 
         tts.write_to_fp(audio)
@@ -705,7 +707,7 @@ if audio_value is not None:
         st.warning("No audio detected.")
         st.stop()
 
-    st.audio(audio_value)
+    st.audio(audio_bytes, format="audio/wav")
     # ---------------- Speech To Text ----------------
 
     with st.spinner("🎧 Listening..."):
@@ -728,19 +730,20 @@ if audio_value is not None:
 
     # ---------------- Show User ----------------
 
+    safe_user = html.escape(user_text)
+
     st.markdown(
         f"""
         <div class="user-card">
 
         <h4>👤 You</h4>
 
-        <p>{user_text}</p>
+        <p>{safe_user}</p>
 
         </div>
         """,
-        unsafe_allow_html = True
+        unsafe_allow_html=True
     )
-
     # Save question count
 
     st.session_state.questions += 1
@@ -755,13 +758,14 @@ if audio_value is not None:
             
     # ---------------- Show AI ----------------
 
+    safe_ai = html.escape(ai_text)
     st.markdown(
         f"""
         <div class="ai-card">
 
         <h4>🤖 AYQ</h4>
 
-        <p>{ai_text}</p>
+        <p>{safe_ai}</p>
 
         </div>
         """,
@@ -812,7 +816,6 @@ if audio_value is not None:
 # ---------------------------------------------------
 
 st.divider()
-
 st.subheader("💬 Conversation History")
 
 if len(st.session_state.history) == 0:
@@ -821,7 +824,7 @@ if len(st.session_state.history) == 0:
 
 else:
 
-    for chat in reversed(st.session_state.history):
+    for chat in reversed(st.session_state.history[:-1]):
 
         st.markdown(
             f"""
@@ -831,7 +834,7 @@ else:
 
             <br><br>
 
-            {chat["question"]}
+            {html.escape(chat["question"])}
 
             <br><br>
 
@@ -850,7 +853,7 @@ else:
 
             <br><br>
 
-            {chat["answer"]}
+            {html.escape(chat["answer"])}
 
             </div>
             """,
@@ -977,7 +980,7 @@ st.markdown(
     </p>
 
     <p>
-    Version 2.0
+    Version 3.0
     </p>
 
     </div>
